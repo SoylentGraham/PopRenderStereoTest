@@ -12,6 +12,7 @@ public class ProjectionSnapshot : MonoBehaviour {
 	public RenderTexture FrameColour;
 	public Matrix4x4 FrameTransform;
 	public bool ClearToAlpha = true;
+	public FilterMode FrameColourFilterMode = FilterMode.Point;
 	//public Texture2D FrameDepth;
 	MeshFilter Filter { get { return GetComponent<MeshFilter>(); } }
 	MeshRenderer Renderer { get { return GetComponent<MeshRenderer>(); } }
@@ -30,11 +31,16 @@ public class ProjectionSnapshot : MonoBehaviour {
 	public int Height = 256;
 	public LayerMask RenderLayers = -1;
 
+	void OnEnable()
+	{
+		Capture();
+	}
+
 	void Capture()
 	{
 		var DepthBits = 24;
 		FrameColour = new RenderTexture(Width, Height, DepthBits, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Default);
-		FrameColour.filterMode = FilterMode.Point;
+		FrameColour.filterMode = FrameColourFilterMode;
 		FrameColour.useMipMap = false;
 		FrameColour.autoGenerateMips = false;
 

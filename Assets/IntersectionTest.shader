@@ -3,6 +3,8 @@
 	Properties
 	{
 		MaxLightnessDiff("MaxLightnessDiff", Range(0,1) ) = 0.1
+		MaxHueDiff("MaxHueDiff", Range(0,1) ) = 0.1
+		MaxSatDiff("MaxSatDiff", Range(0,1) ) = 0.1
 		//FrameTransformA
 		FrameTextureA("FrameTextureA", 2D ) = "black" {}
 		[IntRange]FrameWidthA("FrameWidthA", Range(0,1024) ) = 1024
@@ -14,11 +16,16 @@
 		[IntRange]FrameHeightB("FrameHeightB", Range(0,1024) ) = 512
 		[IntRange]FrameBRayX("FrameBRayX", Range(0,512) ) = 0
 		[IntRange]FrameBRayY("FrameBRayY", Range(0,512) ) = 0
+
+		PositionAdd("PositionAdd", Range(0,20) ) = 0
+		PositionScalar("PositionScalar", Range(0.001,1) ) = 0.1
 	}
 	SubShader
 	{
-		Tags { "RenderType"="Opaque" }
+		Tags { "Queue"="Transparent" "RenderType"="Transparent" "IgnoreProjector"="True" }
 		LOD 100
+		//Blend SrcAlpha One
+		Blend One Zero
 
 		Pass
 		{
@@ -54,7 +61,11 @@
 			int FrameBRayX;
 			int FrameBRayY;
 
+			float PositionAdd;
+			float PositionScalar;
 			float MaxLightnessDiff;
+			float MaxHueDiff;
+			float MaxSatDiff;
 			
 			v2f vert (appdata v)
 			{
@@ -75,10 +86,16 @@
 				float3 HslA = RgbToHsl(ColourA);
 				float3 HslB = RgbToHsl(ColourB);
 
-				float LightnessDiff = abs(HslA.z - HslB.z);
-				if ( LightnessDiff > MaxLightnessDiff )
+				float3 HslDiff = abs(HslA - HslB);
+
+				if ( HslDiff.z > MaxLightnessDiff )
+					return 0;
+				if ( HslDiff.x > MaxHueDiff )
+					return 0;
+				if ( HslDiff.y > MaxSatDiff )
 					return 0;
 
+				float LightnessDiff = HslDiff.z;
 				LightnessDiff /= MaxLightnessDiff;
 				return 1 - LightnessDiff;
 			}
@@ -129,7 +146,14 @@
 
 				float4 Intersection = GetRayIntersection( RayStartA, RayEndA, FrameColourA, RayStartB, RayEndB, FrameColourB );
 
-				return float4( Intersection.w, Intersection.w, Intersection.w, 1 );
+				Intersection.xyz += PositionAdd;
+				Intersection.xyz *= PositionScalar;
+
+				if ( Intersection.w == 0 )
+					return float4(1,0,0,0);
+
+				//return float4(1,0,0,0);
+				return Intersection;
 			}
 			ENDCG
 		}

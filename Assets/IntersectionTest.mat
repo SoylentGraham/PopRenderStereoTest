@@ -27,11 +27,15 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
-    - FrameBRayX: 186
-    - FrameBRayY: 89
-    - FrameHeightA: 256
-    - FrameHeightB: 256
-    - FrameWidthA: 512
-    - FrameWidthB: 512
-    - MaxLightnessDiff: 0.23
+    - FrameBRayX: 255
+    - FrameBRayY: 127
+    - FrameHeightA: 128
+    - FrameHeightB: 128
+    - FrameWidthA: 256
+    - FrameWidthB: 256
+    - MaxHueDiff: 1
+    - MaxLightnessDiff: 0.17
+    - MaxSatDiff: 1
+    - PositionAdd: 0
+    - PositionScalar: 1
     m_Colors: []
