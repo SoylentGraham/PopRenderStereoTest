@@ -79,6 +79,7 @@
 				if ( LightnessDiff > MaxLightnessDiff )
 					return 0;
 
+				LightnessDiff /= MaxLightnessDiff;
 				return 1 - LightnessDiff;
 			}
 
