@@ -23,11 +23,14 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
+    - Debug_ColourScore: 0
+    - Debug_IntersectionDistanceScore: 0
     - FrameHeight: 128
     - FrameWidth: 256
+    - MaxIntersectionDistance: 1
     - RayEnd: 1
-    - RayLength: 0.04
-    - RayStart: 0.81
+    - RayLength: 0.03
+    - RayStart: 0.86
     - Scale: 0.08
     - a: -1
     - b: -1

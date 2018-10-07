@@ -8,6 +8,9 @@
 		RayStart("RayStart", Range(-1,1) ) = -1
 		//RayEnd("RayEnd", Range(-1,1) ) = 1
 		RayLength("RayLength", Range(0.001,2) ) = 2
+		MaxIntersectionDistance("MaxIntersectionDistance", Range(0.0001,4) ) = 1
+		[Toggle]Debug_ColourScore("Debug_ColourScore",Range(0,1))=0
+		[Toggle]Debug_IntersectionDistanceScore("Debug_IntersectionDistanceScore",Range(0,1))=0
 	}
 	SubShader
 	{
@@ -43,7 +46,7 @@
 			float FrameHeight;
 			float RayStart;
 			float RayLength;
-			float a,b,c,d;
+
 
 			float Range(float Min,float Max,float Value)
 			{

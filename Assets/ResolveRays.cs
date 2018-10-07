@@ -14,6 +14,8 @@ public class ResolveRays : MonoBehaviour {
 
 	public ProjectionSnapshot RaySetA;
 	public ProjectionSnapshot RaySetB;
+	[Header("else, by score")]
+	public bool SortByDistance = true;
 
 	int CurrentIndex = 0;
 	int CurrentX { get { return CurrentIndex % RaySetB.FrameColour.width; } }
@@ -31,7 +33,7 @@ public class ResolveRays : MonoBehaviour {
 	public string IntersectionShaderUniform_TextureA = "FrameTextureA";
 	public string IntersectionShaderUniform_TextureB = "FrameTextureB";
 
-	[Range(0, 50)]
+	[Range(0, 100)]
 	public int IterationsPerFrame = 1;
 
 	[Range(1, 100)]
@@ -42,6 +44,8 @@ public class ResolveRays : MonoBehaviour {
 	{
 		for (int i = 0; i < IterationsPerFrame; i++)
 			Iteration();
+		BestHitOutput.Apply(false,false);
+		OnHitOutput.Invoke(BestHitOutput);
 	}
 
 	void Iteration()
@@ -93,8 +97,8 @@ public class ResolveRays : MonoBehaviour {
 			Rgba.a = 1;
 		}
 		BestHitOutput.SetPixel(xb,yb,Rgba);
-		BestHitOutput.Apply(false,false);
-		OnHitOutput.Invoke(BestHitOutput);
+		//BestHitOutput.Apply(false,false);
+		//OnHitOutput.Invoke(BestHitOutput);
 	}
 
 	PointHit? GetRayHit(int xb, int yb)
@@ -106,10 +110,20 @@ public class ResolveRays : MonoBehaviour {
 		//	sort by distance
 		System.Func<PointHit,PointHit,int> Compare = (a,b)=>
 		{
-			if (a.Distance < b.Distance)
-				return -1;
-			if (a.Distance > b.Distance)
-				return 1;
+			if ( SortByDistance )
+			{
+				if (a.Distance < b.Distance)
+					return -1;
+				if (a.Distance > b.Distance)
+					return 1;
+			}
+			else
+			{
+				if (a.Score < b.Score)
+					return 1;
+				if (a.Score > b.Score)
+					return -1;
+			}
 			return 0;
 		};
 		Hits.Sort( (a,b)=>Compare(a,b) );
@@ -117,6 +131,9 @@ public class ResolveRays : MonoBehaviour {
 		return Hits[0];
 	}
 
+
+	RenderTexture HitTexture;
+	Texture2D HitTexture2d;
 	List<PointHit> GetRayHits(int xb, int yb)
 	{
 		var SetAWidth = RaySetA.FrameColour.width;
@@ -132,7 +149,8 @@ public class ResolveRays : MonoBehaviour {
 		IntersectionShader.SetInt("FrameWidthB", SetBWidth);
 		IntersectionShader.SetInt("FrameHeightB", SetBHeight);
 
-		var CameraPosA = RaySetA.FrameTransform.MultiplyPoint(Vector3.zero);
+		var CameraPosA = RaySetA.FrameTransform.MultiplyPoint(new Vector3(0, 0, -1));
+		var CameraPosB = RaySetB.FrameTransform.MultiplyPoint(new Vector3(0, 0, -1));
 
 		var Hits = new List<PointHit>();
 		System.Action<int,int,Color> AddHit = (xa,ya,ResultColour)=>
@@ -141,7 +159,7 @@ public class ResolveRays : MonoBehaviour {
 			if (Score < 0.001f)
 				return;
 			var xyz = new Vector3(ResultColour.r, ResultColour.g, ResultColour.b);
-			var Distance = Vector3.Distance(CameraPosA, xyz);
+			var Distance = Vector3.Distance(CameraPosB, xyz);
 			var Hit = new PointHit();
 			Hit.Distance = Distance;
 			Hit.Position = xyz;
@@ -149,11 +167,17 @@ public class ResolveRays : MonoBehaviour {
 			Hits.Add(Hit);
 		};
 
-		var HitTexture = RenderTexture.GetTemporary(SetAWidth, SetAHeight, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
+
+		if (!HitTexture)
+		{
+			HitTexture = RenderTexture.GetTemporary(SetAWidth, SetAHeight, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
+			HitTexture.filterMode = FilterMode.Point;
+		}
 		Graphics.Blit(null,HitTexture,IntersectionShader);
-		var HitTexure2d = PopX.Textures.GetTexture2D(HitTexture,TextureFormat.RGBAFloat);
-		RenderTexture.ReleaseTemporary(HitTexture);
-		var HitPixels = HitTexure2d.GetPixels();
+		//var HitTexure2d = PopX.Textures.GetTexture2D(HitTexture,TextureFormat.RGBAFloat);
+		PopX.Textures.GetTexture2D(HitTexture, ref HitTexture2d, TextureFormat.RGBAFloat);
+		//RenderTexture.ReleaseTemporary(HitTexture);
+		var HitPixels = HitTexture2d.GetPixels();
 		for (int i = 0; i < HitPixels.Length;	i++ )
 		{
 			var xa = i % SetAWidth;

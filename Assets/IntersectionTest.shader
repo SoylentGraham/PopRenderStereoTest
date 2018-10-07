@@ -19,6 +19,9 @@
 
 		PositionAdd("PositionAdd", Range(0,20) ) = 0
 		PositionScalar("PositionScalar", Range(0.001,1) ) = 0.1
+		MaxIntersectionDistance("MaxIntersectionDistance", Range(0.0001,10) ) = 1
+		[Toggle]Debug_ColourScore("Debug_ColourScore",Range(0,1))=0
+		[Toggle]Debug_IntersectionDistanceScore("Debug_IntersectionDistanceScore",Range(0,1))=0
 	}
 	SubShader
 	{
@@ -66,7 +69,15 @@
 			float MaxLightnessDiff;
 			float MaxHueDiff;
 			float MaxSatDiff;
-			
+
+
+			float MaxIntersectionDistance;
+			float Debug_ColourScore;
+			float Debug_IntersectionDistanceScore;
+			#define DEBUG_COLOURSCORE	(Debug_ColourScore>0.5f)
+			#define DEBUG_INTERSECTIONDISTANCESCORE	(Debug_IntersectionDistanceScore>0.5f)
+
+
 			v2f vert (appdata v)
 			{
 				v2f o;
@@ -105,14 +116,37 @@
 				float ColourScore = GetColourScore( ColourA, ColourB );
 				float IntersectionTimeA = 0;
 				float IntersectionTimeB = 0;
+				float ScoreMult = 1;
 				if ( !GetLineLineIntersection3( RayStartA, RayEndA, RayStartB, RayEndB, IntersectionTimeA, IntersectionTimeB ) )
-					ColourScore = 0;
-				float3 IntersectionPos = lerp( RayStartA, RayEndA, IntersectionTimeA );
+					ScoreMult = 0;
+				//	these are the nearest points on the line for an intersection
+				float3 IntersectionPosA = lerp( RayStartA, RayEndA, IntersectionTimeA );
+				float3 IntersectionPosB = lerp( RayStartB, RayEndB, IntersectionTimeB );
 
+				//	world space rejections
 				//	underneath floor plane
-				if ( IntersectionPos.y < 0 )
-					ColourScore = 0;
-				return float4( IntersectionPos, ColourScore );
+				if ( IntersectionPosA.y < 0 )
+					ScoreMult = 0;
+				if ( IntersectionPosB.y < 0 )
+					ScoreMult = 0;
+
+				float3 IntersectionPos = lerp( IntersectionPosA, IntersectionPosB, 0.5f );
+				//float3 IntersectionPos = IntersectionPosB;
+
+				float IntersectionDistance = length(IntersectionPosA-IntersectionPosB);
+				float IntersectionDistanceScore = ( IntersectionDistance / MaxIntersectionDistance );
+				if ( IntersectionDistanceScore > 1 )
+					ScoreMult = 0;
+				IntersectionDistanceScore = 1 - min( 1, IntersectionDistanceScore );
+
+				if ( DEBUG_INTERSECTIONDISTANCESCORE )
+					return float4( IntersectionPos, ScoreMult * IntersectionDistanceScore );
+				if ( DEBUG_COLOURSCORE )
+					return float4( IntersectionPos, ScoreMult * ColourScore );
+
+				float Score = ScoreMult * ColourScore * IntersectionDistanceScore;
+				//float Score = ScoreMult * IntersectionDistanceScore;
+				return float4( IntersectionPos, Score );
 			}
 
 			float3 GetFramePosition(float4x4 FrameTransform,float2 xy,float Depth,float2 FrameSize)
@@ -151,6 +185,11 @@
 
 				if ( Intersection.w == 0 )
 					return float4(1,0,0,0);
+
+				if ( DEBUG_COLOURSCORE || DEBUG_INTERSECTIONDISTANCESCORE )
+				{
+					Intersection.xyz = Intersection.w;
+				}
 
 				//return float4(1,0,0,0);
 				return Intersection;
