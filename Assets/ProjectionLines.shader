@@ -85,9 +85,11 @@
 
 				//	degenerate alpha'd pixels
 				float4 ColourSample = tex2Dlod( _MainTex, float4(o.uv,0,0) );
-				if ( ColourSample.w == 0 )
-					o.vertex = float4(0,0,0,0);
 
+				if ( ColourSample.w == 0 )
+				{
+					o.vertex = float4(0,0,0,0);
+				}
 				return o;
 			}
 			

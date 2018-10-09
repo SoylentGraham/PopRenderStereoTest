@@ -17,11 +17,15 @@
 		[IntRange]FrameBRayX("FrameBRayX", Range(0,512) ) = 0
 		[IntRange]FrameBRayY("FrameBRayY", Range(0,512) ) = 0
 
+		[Enum(OutputPosition,0,OutputColour,1)]OutputData("OutputData", float) = 0
 		PositionAdd("PositionAdd", Range(0,20) ) = 0
 		PositionScalar("PositionScalar", Range(0.001,1) ) = 0.1
 		MaxIntersectionDistance("MaxIntersectionDistance", Range(0.0001,10) ) = 1
 		[Toggle]Debug_ColourScore("Debug_ColourScore",Range(0,1))=0
 		[Toggle]Debug_IntersectionDistanceScore("Debug_IntersectionDistanceScore",Range(0,1))=0
+		[Toggle]Debug_ShowRayBPos("Debug_ShowRayBPos",Range(0,1))=0
+		[Toggle]Debug_UseSameFrame("Debug_UseSameFrame",Range(0,1))=0
+
 	}
 	SubShader
 	{
@@ -74,8 +78,17 @@
 			float MaxIntersectionDistance;
 			float Debug_ColourScore;
 			float Debug_IntersectionDistanceScore;
-			#define DEBUG_COLOURSCORE	(Debug_ColourScore>0.5f)
-			#define DEBUG_INTERSECTIONDISTANCESCORE	(Debug_IntersectionDistanceScore>0.5f)
+			float Debug_ShowRayBPos;
+			float Debug_UseSameFrame;
+			#define SCORE_INCLUDE_COLOUR	(Debug_ColourScore>0.5f)
+			#define SCORE_INCLUDE_DISTANCE	(Debug_IntersectionDistanceScore>0.5f)
+			#define DEBUG_SHOWRAYBPOS	(Debug_ShowRayBPos>0.5f)
+			#define DEBUG_USESAMEFRAME	(Debug_UseSameFrame>0.5f)
+
+			float OutputData;
+			#define OUTPUT_POSITION	( (int)OutputData == 0 )
+			#define OUTPUT_COLOUR	( (int)OutputData == 1 )
+
 
 
 			v2f vert (appdata v)
@@ -118,7 +131,10 @@
 				float IntersectionTimeB = 0;
 				float ScoreMult = 1;
 				if ( !GetLineLineIntersection3( RayStartA, RayEndA, RayStartB, RayEndB, IntersectionTimeA, IntersectionTimeB ) )
+				{
 					ScoreMult = 0;
+					return float4(0,0,0,0);
+				}
 				//	these are the nearest points on the line for an intersection
 				float3 IntersectionPosA = lerp( RayStartA, RayEndA, IntersectionTimeA );
 				float3 IntersectionPosB = lerp( RayStartB, RayEndB, IntersectionTimeB );
@@ -136,17 +152,29 @@
 				float IntersectionDistance = length(IntersectionPosA-IntersectionPosB);
 				float IntersectionDistanceScore = ( IntersectionDistance / MaxIntersectionDistance );
 				if ( IntersectionDistanceScore > 1 )
+				{
 					ScoreMult = 0;
+				}
 				IntersectionDistanceScore = 1 - min( 1, IntersectionDistanceScore );
 
-				if ( DEBUG_INTERSECTIONDISTANCESCORE )
-					return float4( IntersectionPos, ScoreMult * IntersectionDistanceScore );
-				if ( DEBUG_COLOURSCORE )
-					return float4( IntersectionPos, ScoreMult * ColourScore );
+				float3 OutputData = IntersectionPos;
 
-				float Score = ScoreMult * ColourScore * IntersectionDistanceScore;
+				//if ( OUTPUT_COLOUR )
+					OutputData = ColourA;
+
+				//float Score = ScoreMult;
+				float Score = 1;
+				if ( SCORE_INCLUDE_DISTANCE )
+					Score *= IntersectionDistanceScore;
+				if ( SCORE_INCLUDE_COLOUR )
+					Score *= ColourScore;
+
+				//float Score = ScoreMult * ColourScore * IntersectionDistanceScore;
+				//float Score = IntersectionDistanceScore;
+				//Score = min(1,Score);
+
 				//float Score = ScoreMult * IntersectionDistanceScore;
-				return float4( IntersectionPos, Score );
+				return float4( OutputData, Score );
 			}
 
 			float3 GetFramePosition(float4x4 FrameTransform,float2 xy,float Depth,float2 FrameSize)
@@ -178,19 +206,41 @@
 				float3 RayEndB = GetFramePosition( FrameTransformB, uvB, 1, float2(FrameWidthB,FrameHeightB) );
 				float4 FrameColourB = tex2D( FrameTextureB, uvB );
 
+				if ( DEBUG_USESAMEFRAME )
+				{
+					//uvB = uvA;
+					RayStartB = RayStartA;
+					RayEndB = RayEndA;
+					FrameColourB = FrameColourA;
+				}
+
 				float4 Intersection = GetRayIntersection( RayStartA, RayEndA, FrameColourA, RayStartB, RayEndB, FrameColourB );
 
-				Intersection.xyz += PositionAdd;
-				Intersection.xyz *= PositionScalar;
+				if ( DEBUG_SHOWRAYBPOS  )
+				{
+			
+					if ( length(i.uv-uvB) < 0.01f )
+					{
+						return float4(1,0,0,1);
+					}
+				}
 
+				//Intersection.xyz += PositionAdd;
+				//Intersection.xyz *= PositionScalar;
+
+				//Intersection.xyz *= max(Intersection.w,0.2f);
 				if ( Intersection.w == 0 )
-					return float4(1,0,0,0);
+				{
+					return float4(0,0,1,0);
+				}
 
+				return float4(Intersection.www,1);
+/*
 				if ( DEBUG_COLOURSCORE || DEBUG_INTERSECTIONDISTANCESCORE )
 				{
 					Intersection.xyz = Intersection.w;
 				}
-
+				*/
 				//return float4(1,0,0,0);
 				return Intersection;
 			}

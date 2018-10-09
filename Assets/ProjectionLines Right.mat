@@ -4,7 +4,7 @@
 Material:
   serializedVersion: 6
   m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_Name: ProjectionLines Right
   m_Shader: {fileID: 4800000, guid: 5f82824460cb64916b69569fb8b0efb2, type: 3}
@@ -26,10 +26,10 @@ Material:
     - Debug_ColourScore: 0
     - Debug_IntersectionDistanceScore: 0
     - FrameHeight: 128
-    - FrameWidth: 256
+    - FrameWidth: 128
     - MaxIntersectionDistance: 1
     - RayEnd: 1
-    - RayLength: 0.05
+    - RayLength: 0.22
     - RayStart: 0.82
     - Scale: 0.08
     - a: -1
