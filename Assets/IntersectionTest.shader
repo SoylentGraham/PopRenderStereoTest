@@ -17,7 +17,7 @@
 		[IntRange]FrameBRayX("FrameBRayX", Range(0,512) ) = 0
 		[IntRange]FrameBRayY("FrameBRayY", Range(0,512) ) = 0
 
-		[Enum(OutputPosition,0,OutputColour,1)]OutputData("OutputData", float) = 0
+		[Enum(OutputColourA,0,OutputColourB,1,OutputPositionA,2,OutputPositonB,3,OutputPositionAverage,4)]OutputFormat("OutputFormat", float) = 0
 		PositionAdd("PositionAdd", Range(0,20) ) = 0
 		PositionScalar("PositionScalar", Range(0.001,1) ) = 0.1
 		MaxIntersectionDistance("MaxIntersectionDistance", Range(0.0001,10) ) = 1
@@ -85,9 +85,12 @@
 			#define DEBUG_SHOWRAYBPOS	(Debug_ShowRayBPos>0.5f)
 			#define DEBUG_USESAMEFRAME	(Debug_UseSameFrame>0.5f)
 
-			float OutputData;
-			#define OUTPUT_POSITION	( (int)OutputData == 0 )
-			#define OUTPUT_COLOUR	( (int)OutputData == 1 )
+			float OutputFormat;
+			#define OutputColourA			( (int)OutputFormat == 0 )
+			#define OutputColourB			( (int)OutputFormat == 1 )
+			#define OutputPositionA			( (int)OutputFormat == 2 )
+			#define OutputPositonB			( (int)OutputFormat == 3 )
+			#define OutputPositionAverage	( (int)OutputFormat == 4 )
 
 
 
@@ -146,9 +149,6 @@
 				if ( IntersectionPosB.y < 0 )
 					ScoreMult = 0;
 
-				float3 IntersectionPos = lerp( IntersectionPosA, IntersectionPosB, 0.5f );
-				//float3 IntersectionPos = IntersectionPosB;
-
 				float IntersectionDistance = length(IntersectionPosA-IntersectionPosB);
 				float IntersectionDistanceScore = ( IntersectionDistance / MaxIntersectionDistance );
 				if ( IntersectionDistanceScore > 1 )
@@ -157,10 +157,19 @@
 				}
 				IntersectionDistanceScore = 1 - min( 1, IntersectionDistanceScore );
 
-				float3 OutputData = IntersectionPos;
-
-				//if ( OUTPUT_COLOUR )
+				float3 OutputData = float3(1,1,0);
+				float3 IntersectionPos = lerp( IntersectionPosA, IntersectionPosB, 0.5f );
+				if ( OutputColourA )
 					OutputData = ColourA;
+				if ( OutputColourB )
+					OutputData = ColourB;
+				if ( OutputPositionA )
+					OutputData = IntersectionPosA;
+				if ( OutputPositonB )
+					OutputData = IntersectionPosB;
+				if ( OutputPositionAverage )
+					OutputData = IntersectionPos;
+
 
 				//float Score = ScoreMult;
 				float Score = 1;
@@ -234,7 +243,7 @@
 					return float4(0,0,1,0);
 				}
 
-				return float4(Intersection.www,1);
+				//return float4(Intersection.www,1);
 /*
 				if ( DEBUG_COLOURSCORE || DEBUG_INTERSECTIONDISTANCESCORE )
 				{
