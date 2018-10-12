@@ -31,8 +31,8 @@ Material:
     - Debug_IntersectionDistanceScore: 1
     - Debug_ShowRayBPos: 1
     - Debug_UseSameFrame: 0
-    - FrameBRayX: 81
-    - FrameBRayY: 25
+    - FrameBRayX: 127
+    - FrameBRayY: 127
     - FrameHeightA: 128
     - FrameHeightB: 128
     - FrameWidthA: 128
@@ -42,6 +42,7 @@ Material:
     - MaxLightnessDiff: 0.23
     - MaxSatDiff: 0.86
     - OutputData: 1
+    - OutputFormat: 2
     - PositionAdd: 0
     - PositionScalar: 1
     m_Colors: []

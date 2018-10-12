@@ -83,12 +83,14 @@ public class ResolveRays : MonoBehaviour {
 		Color Rgba = Color.black;
 		if ( Hit.HasValue )
 		{
-			var DistanceNorm = Hit.Value.Distance / MaxDistance;
-			if (DistanceNorm > 1)
-				DistanceNorm = 1;
-			Rgba = PopColor.NormalToRedGreenClamped(DistanceNorm);
-
-			if (!OutputDistance)
+			if (OutputDistance)
+			{
+				var DistanceNorm = Hit.Value.Distance / MaxDistance;
+				if (DistanceNorm > 1)
+					DistanceNorm = 1;
+				Rgba = PopColor.NormalToRedGreenClamped(DistanceNorm);
+			}
+			else
 			{
 				Rgba.r = Hit.Value.Position.x;
 				Rgba.g = Hit.Value.Position.y;
@@ -107,6 +109,7 @@ public class ResolveRays : MonoBehaviour {
 		if (Hits.Count == 0)
 			return null;
 
+		Debug.Log(xb + "," + yb + " got " + Hits.Count + " hits");
 		//	sort by distance
 		System.Func<PointHit,PointHit,int> Compare = (a,b)=>
 		{
