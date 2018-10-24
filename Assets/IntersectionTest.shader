@@ -18,7 +18,8 @@
 		[IntRange]FrameBRayY("FrameBRayY", Range(0,512) ) = 0
 
 		//[Enum(OutputColourA,0,OutputColourB,1,OutputPositionA,2,OutputPositonB,3,OutputPositionAverage,4,OutputScore,5,OutputTestRayPoint,6,OutputTimeA,7,OutputTimeB,8)]OutputFormat("OutputFormat", float) = 0
-		[Enum(OutputColourA,0,OutputColourB,1,OutputPositionA,2,OutputPositonB,3,OutputTestRayPoint,6,OutputIntersectionTimeA,7,OutputIntersectionTimeB,8)]OutputFormat("OutputFormat", float) = 0
+		//[Enum(OutputColourA,0,OutputColourB,1,OutputPositionA,2,OutputPositonB,3,OutputTestRayPoint,6,OutputIntersectionTimeA,7,OutputIntersectionTimeB,8)]OutputFormat("OutputFormat", float) = 0
+		[Enum(OutputColourA,0,OutputColourB,1,OutputPositionA,2,OutputPositonB,3,OutputPositionAverage,4,OutputIntersectionTimeA,7,OutputIntersectionTimeB,8)]OutputFormat("OutputFormat", float) = 0
 		PositionAdd("PositionAdd", Range(0,20) ) = 0
 		PositionScalar("PositionScalar", Range(-1,1) ) = 0.1
 		MaxIntersectionDistance("MaxIntersectionDistance", Range(0.0001,1000) ) = 1

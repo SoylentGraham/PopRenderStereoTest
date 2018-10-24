@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
+[ExecuteInEditMode]
 [RequireComponent(typeof(MeshRenderer))]
 [RequireComponent(typeof(MeshFilter))]
 public class ProjectionSnapshot : MonoBehaviour {
@@ -30,6 +31,19 @@ public class ProjectionSnapshot : MonoBehaviour {
 	public int Width = 512;
 	public int Height = 256;
 	public LayerMask RenderLayers = -1;
+
+	//	rebuild when editor refreshes
+	bool HasAutoCaptured = false;
+	void Update()
+	{
+		if (!HasAutoCaptured)
+		{
+			OnEnable();
+			HasAutoCaptured = true;
+		}
+	}
+
+
 
 	void OnEnable()
 	{

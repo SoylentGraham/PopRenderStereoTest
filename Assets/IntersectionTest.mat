@@ -39,13 +39,13 @@ Material:
     - FrameWidthB: 128
     - Hit_MaxZ: 10
     - Hit_MinY: 0
-    - Hit_MinZ: 1
-    - MaxHueDiff: 0.19
-    - MaxIntersectionDistance: 1.24
-    - MaxLightnessDiff: 0.05
-    - MaxSatDiff: 0.18
+    - Hit_MinZ: 0
+    - MaxHueDiff: 0.09
+    - MaxIntersectionDistance: 0.3
+    - MaxLightnessDiff: 0.01
+    - MaxSatDiff: 0.05
     - OutputData: 1
-    - OutputFormat: 2
+    - OutputFormat: 3
     - PositionAdd: 0
     - PositionScalar: 1
     m_Colors:
