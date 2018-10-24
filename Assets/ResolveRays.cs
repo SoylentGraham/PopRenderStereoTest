@@ -10,6 +10,12 @@ public struct PointHit
 	//public Color Colour;
 };
 
+[System.Serializable]
+public class UnityEvent_Vector3 : UnityEngine.Events.UnityEvent<Vector3> { }
+
+
+
+
 public class ResolveRays : MonoBehaviour {
 
 	public ProjectionSnapshot RaySetA;
@@ -26,6 +32,8 @@ public class ResolveRays : MonoBehaviour {
 	Texture2D BestHitOutput;
 	public UnityEvent_Texture OnHitOutput;
 	public bool OutputDistance = true;
+	public UnityEvent_Vector3 OnAnyHitFound;
+	public UnityEvent_Vector3 OnBestHitFound;
 
 	public Material IntersectionShader;
 	public string IntersectionShaderUniform_X = "FrameBRayX";
@@ -79,6 +87,9 @@ public class ResolveRays : MonoBehaviour {
 		if (!BestHitOutput)
 			BestHitOutput = new Texture2D(SetBWidth, SetBHeight, TextureFormat.RGBA32, false);
 
+		if (Hit.HasValue)
+			OnBestHitFound.Invoke(Hit.Value.Position);
+
 		//	output colour
 		Color Rgba = Color.black;
 		if ( Hit.HasValue )
@@ -131,6 +142,9 @@ public class ResolveRays : MonoBehaviour {
 			return 0;
 		};
 		Hits.Sort( (a,b)=>Compare(a,b) );
+
+		for (int h = 0; h < Hits.Count; h++)
+			OnAnyHitFound.Invoke(Hits[h].Position);
 
 		return Hits[0];
 	}

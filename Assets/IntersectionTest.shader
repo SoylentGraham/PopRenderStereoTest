@@ -17,18 +17,21 @@
 		[IntRange]FrameBRayX("FrameBRayX", Range(0,512) ) = 0
 		[IntRange]FrameBRayY("FrameBRayY", Range(0,512) ) = 0
 
-		[Enum(OutputColourA,0,OutputColourB,1,OutputPositionA,2,OutputPositonB,3,OutputPositionAverage,4,OutputScore,5)]OutputFormat("OutputFormat", float) = 0
+		//[Enum(OutputColourA,0,OutputColourB,1,OutputPositionA,2,OutputPositonB,3,OutputPositionAverage,4,OutputScore,5,OutputTestRayPoint,6,OutputTimeA,7,OutputTimeB,8)]OutputFormat("OutputFormat", float) = 0
+		[Enum(OutputColourA,0,OutputColourB,1,OutputPositionA,2,OutputPositonB,3,OutputTestRayPoint,6,OutputIntersectionTimeA,7,OutputIntersectionTimeB,8)]OutputFormat("OutputFormat", float) = 0
 		PositionAdd("PositionAdd", Range(0,20) ) = 0
-		PositionScalar("PositionScalar", Range(0.001,1) ) = 0.1
-		MaxIntersectionDistance("MaxIntersectionDistance", Range(0.0001,10) ) = 1
+		PositionScalar("PositionScalar", Range(-1,1) ) = 0.1
+		MaxIntersectionDistance("MaxIntersectionDistance", Range(0.0001,1000) ) = 1
 		[Toggle]Debug_ColourScore("Debug_ColourScore",Range(0,1))=0
 		[Toggle]Debug_IntersectionDistanceScore("Debug_IntersectionDistanceScore",Range(0,1))=0
 		[Toggle]Debug_ShowRayBPos("Debug_ShowRayBPos",Range(0,1))=0
 		[Toggle]Debug_UseSameFrame("Debug_UseSameFrame",Range(0,1))=0
 
 		Hit_MinY("Hit_MinY", Range(-100,0) ) = 0
-		Hit_MinZ("Hit_MinZ", Range(-1000,0) ) = -100
+		Hit_MinZ("Hit_MinZ", Range(-1000,10) ) = -100
 		Hit_MaxZ("Hit_MaxZ", Range(-10,1000) ) = 100
+
+		ErrorColour("ErrorColour", COLOR ) = (1,0,1,0)
 	}
 	SubShader
 	{
@@ -77,6 +80,8 @@
 			float MaxHueDiff;
 			float MaxSatDiff;
 
+			float4 ErrorColour;
+			#define ERROR_COLOUR ErrorColour;
 
 			float MaxIntersectionDistance;
 			float Debug_ColourScore;
@@ -94,8 +99,10 @@
 			#define OutputPositionA			( (int)OutputFormat == 2 )
 			#define OutputPositonB			( (int)OutputFormat == 3 )
 			#define OutputPositionAverage	( (int)OutputFormat == 4 )
-			#define OutputScore	( (int)OutputFormat == 5 )
-
+			#define OutputScore				( (int)OutputFormat == 5 )
+			#define OutputTestRayPoint		( (int)OutputFormat == 6 )
+			#define OutputIntersectionTimeA	( (int)OutputFormat == 7 )
+			#define OutputIntersectionTimeB	( (int)OutputFormat == 8 )
 			float Hit_MinY;
 			float Hit_MinZ;
 			float Hit_MaxZ;
@@ -134,42 +141,42 @@
 				return 1 - LightnessDiff;
 			}
 
+
 			float4 GetRayIntersection(float3 RayStartA,float3 RayEndA,float4 ColourA,float3 RayStartB,float3 RayEndB,float4 ColourB)
 			{
 				float ColourScore = GetColourScore( ColourA, ColourB );
 				float IntersectionTimeA = 0;
 				float IntersectionTimeB = 0;
 				float ScoreMult = 1;
-				if ( !GetLineLineIntersection3( RayStartA, RayEndA, RayStartB, RayEndB, IntersectionTimeA, IntersectionTimeB ) )
-				{
-					//ScoreMult = 0;
-					//return float4(0,0,0,0);
-				}
+				GetLineLineIntersection3( RayStartA, RayEndA, RayStartB, RayEndB, IntersectionTimeA, IntersectionTimeB );
+
 				//	these are the nearest points on the line for an intersection
 				float3 IntersectionPosA = lerp( RayStartA, RayEndA, IntersectionTimeA );
 				float3 IntersectionPosB = lerp( RayStartB, RayEndB, IntersectionTimeB );
 
 				//	world space rejections
 				//	underneath floor plane
-				if ( IntersectionPosA.y < Hit_MinY )
-					ScoreMult = 0;
-				if ( IntersectionPosB.y < Hit_MinY )
-					ScoreMult = 0;
-				if ( IntersectionPosA.z < Hit_MinZ )
-					ScoreMult = 0;
-				if ( IntersectionPosB.z < Hit_MinZ )
-					ScoreMult = 0;
-				if ( IntersectionPosA.z > Hit_MaxZ )
-					ScoreMult = 0;
-				if ( IntersectionPosB.z > Hit_MaxZ )
-					ScoreMult = 0;
+				int OutOfBounds = 0;
+				OutOfBounds += ( IntersectionPosA.y < Hit_MinY );
+				OutOfBounds += ( IntersectionPosB.y < Hit_MinY );
 
-					/*
-				IntersectionPosA += PositionAdd.xxx;
-				IntersectionPosB += PositionAdd.xxx;
-				IntersectionPosA *= PositionScalar.xxx;
-				IntersectionPosB *= PositionScalar.xxx;
-				*/
+				OutOfBounds += ( IntersectionPosA.z < Hit_MinZ );
+				OutOfBounds += ( IntersectionPosB.z < Hit_MinZ );
+				OutOfBounds += ( IntersectionPosA.z > Hit_MaxZ );
+				OutOfBounds += ( IntersectionPosB.z > Hit_MaxZ );
+
+				if ( OutOfBounds )
+				{
+					ScoreMult = 0;
+					return float4(1,0,0,0);
+				}
+
+
+				//IntersectionPosA += PositionAdd.xxx;
+				//IntersectionPosB += PositionAdd.xxx;
+				//IntersectionPosA *= PositionScalar.xxx;
+				//IntersectionPosB *= PositionScalar.xxx;
+
 				float IntersectionDistance = length(IntersectionPosA-IntersectionPosB);
 				float IntersectionDistanceScore = ( IntersectionDistance / MaxIntersectionDistance );
 				if ( IntersectionDistanceScore > 1 )
@@ -178,8 +185,8 @@
 				}
 				IntersectionDistanceScore = 1 - min( 1, IntersectionDistanceScore );
 
-				float Score = ScoreMult;
-				//float Score = 1;
+				//float Score = ScoreMult;
+				float Score = 1;
 				if ( SCORE_INCLUDE_DISTANCE )
 					Score *= IntersectionDistanceScore;
 				if ( SCORE_INCLUDE_COLOUR )
@@ -199,8 +206,24 @@
 					OutputData = IntersectionPos;
 				if ( OutputScore )
 					OutputData = Score.xxx;
-
-				
+				if ( OutputTestRayPoint )
+				{
+					OutputData = lerp( RayStartA, RayEndA, 0.5f );
+					//Score = 1;
+				}
+				if ( OutputIntersectionTimeA )
+				{
+					OutputData = IntersectionTimeA.xxx;
+					OutputData.z = (IntersectionTimeA < 0);
+					OutputData.y = (IntersectionTimeA > 1);
+				}
+				if ( OutputIntersectionTimeB )
+				{
+					OutputData = IntersectionTimeB.xxx;
+					OutputData.z = (IntersectionTimeB < 0);
+					OutputData.y = (IntersectionTimeB > 1);
+				}
+	
 				//float Score = ScoreMult * ColourScore * IntersectionDistanceScore;
 				//float Score = IntersectionDistanceScore;
 				//Score = min(1,Score);
@@ -212,7 +235,7 @@
 			float3 GetFramePosition(float4x4 FrameTransform,float2 xy,float Depth,float2 FrameSize)
 			{
 				//	move to camera viewspace (-1..1,-1..1,-1..1)
-				xy /= FrameSize;
+				//xy /= FrameSize;
 				xy = lerp( -1, 1, xy );
 			
 			 	float z = lerp( -1, 1, Depth );
@@ -263,7 +286,7 @@
 				//Intersection.xyz *= max(Intersection.w,0.2f);
 				if ( Intersection.w == 0 )
 				{
-					return float4(0,1,1,0);
+					return ERROR_COLOUR;
 				}
 
 				//return float4(Intersection.www,1);

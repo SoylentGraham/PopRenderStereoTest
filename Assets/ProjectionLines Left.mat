@@ -29,8 +29,8 @@ Material:
     - FrameWidth: 128
     - MaxIntersectionDistance: 1
     - RayEnd: 1
-    - RayLength: 0.08
-    - RayStart: 0.86
+    - RayLength: 0.01
+    - RayStart: 0.9
     - Scale: 0.08
     - a: -1
     - b: -1
